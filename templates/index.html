@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NaiveWhiteBoard</title>
+    <link rel="icon" href="https://naivewhiteboard.oss-cn-shanghai.aliyuncs.com/img/welcome.jpeg" type="image/x-icon">
+    <!-- JQuery -->
+    <script src="https://naivewhiteboard.oss-cn-shanghai.aliyuncs.com/js/jquery-3.6.1.min.js"></script>
+    <!-- Fabric.js http://fabricjs.com/ -->
+    <script src="https://naivewhiteboard.oss-cn-shanghai.aliyuncs.com/js/fabric.js"></script>
+    <!-- Material Design Lite https://getmdl.io/ -->
+    <link href="https://naivewhiteboard.oss-cn-shanghai.aliyuncs.com/css/icon.css" rel="stylesheet" type="text/css">
+    <link href="https://naivewhiteboard.oss-cn-shanghai.aliyuncs.com/css/material.indigo-pink.min.css" rel="stylesheet" type="text/css">
+    <script src="https://naivewhiteboard.oss-cn-shanghai.aliyuncs.com/js/material.min.js"></script>
+    <!-- clipboard.js https://clipboardjs.com/ -->
+    <script src="https://naivewhiteboard.oss-cn-shanghai.aliyuncs.com/js/clipboard.js"></script>
+    <!-- 页面样式 -->
+    <link href="/static/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <!-- 页面区 -->
+    <div class="controls top">
+        <span class="page-add material-symbols-outlined" id="add_page">add_circle</span>
+    </div>
+    <!-- 工具栏 -->
+    <div class="controls mdl-shadow--3dp" style="top: 35px">
+        <span class="material-symbols-outlined tool" id="pencil" onclick="pencilMode()">edit</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="pencil">铅笔</div>
+        <span class="material-symbols-outlined tool" id="line" onclick="canvas.addElement('Line')">straight</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="line">直线</div>
+        <span class="material-symbols-outlined tool" id="circle" onclick="canvas.addElement('Circle')">circle</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="circle">椭圆</div>
+        <span class="material-symbols-outlined tool" id="rect" onclick="canvas.addElement('Rect')">rectangle</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="rect">长方形</div>
+        <span class="material-symbols-outlined tool" id="triangle" onclick="canvas.addElement('Triangle')">change_history</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="triangle">三角形</div>
+        <span class="material-symbols-outlined tool" id="itext" onclick="canvas.addElement('IText')">text_fields</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="itext">文字框</div>
+    </div>
+    <div class="controls mdl-shadow--3dp" style="top: 280px;">
+        <span class="material-symbols-outlined tool" id="lock">lock_open</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="lock">锁定</div>
+    </div>
+    <div class="controls mdl-shadow--3dp" style="bottom: 5px;">
+        <span class="material-symbols-outlined tool" id="share">share</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="share">分享白板</div>
+        <span class="material-symbols-outlined tool" id="fullscreen">fullscreen</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="fullscreen">全屏/取消全屏</div>
+        <span class="material-symbols-outlined tool" id="downloadImg">image</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="downloadImg">下载SVG</div>
+        <span class="material-symbols-outlined tool" id="downloadPage">file_download</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="downloadPage">下载当前页面的配置信息</div>
+        <span class="material-symbols-outlined tool" id="uploadPage">publish</span>
+        <div class="mdl-tooltip mdl-tooltip--right" data-mdl-for="uploadPage">上传配置信息到当前页面</div>
+    </div>
+    <!-- 自定义窗口 -->
+    <div class="customize mdl-shadow--3dp" id="customize">
+        <div class="option">
+            填充:<input type="color" id="fillColor">
+            边框:<input type="color" id="stroke">
+            背景:<input type="color" id="backgroundColor">
+        </div>
+        <div class="option">
+            边框(字体)粗细:<input class="mdl-slider mdl-js-slider" id="strokeWidth" type="range" min="0" max="50">
+        </div>
+        <div class="option">
+            透明度:<input class="mdl-slider mdl-js-slider" id="opacity" type="range" min="0" max="100">
+        </div>
+    </div>
+    <!-- 铅笔格式 -->
+    <div class="customize mdl-shadow--3dp" id="pencilCustomize">
+        <div class="option">
+            铅笔颜色: <input type="color" id="pencilColor">
+        </div>
+        <div class="option">
+            铅笔粗细: <input class="mdl-slider mdl-js-slider" id="pencilWidth" type="range" min="0" max="25" value="2">
+        </div>
+    </div>
+    <!-- 人数显示 -->
+    <span class="users mdl-shadow--3dp mdl-chip mdl-chip--deletable">
+        <span class="mdl-chip__text">在线:<span id="userCount"></span>人</span>
+        <button type="button" class="mdl-chip__action" id="help"><i class="material-icons">help</i></button>
+    </span>
+    <!-- 上传表单 -->
+    <input type="file" id="uploadForm" style="display:none;"/>
+    <!-- 新建/加入白板 -->
+    <div class="join mdl-card mdl-shadow--3dp">
+        <div class="title"></div>
+        <div class="mdl-card__supporting-text">输入白板名称来创建新白板或加入朋友分享的白板~</div>
+        <div class="mdl-card__actions mdl-card--border" style="padding-left: 20px;">
+            <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" id="createWhiteBoard">创建</a>
+            <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" id="joinWhiteBoard">加入</a>
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="boardName">
+                <label class="mdl-textfield__label" for="boardName">白板名称</label>
+            </div>
+        </div>
+    </div>
+    <!-- 遮罩层 -->
+    <div class="mask"></div>
+    <!-- 底部提示区 -->
+    <div class="mdl-js-snackbar mdl-snackbar" id="toastBar">
+        <div class="mdl-snackbar__text"></div>
+        <button class="mdl-snackbar__action" type="button"></button>
+    </div>
+    <!-- 画布 -->
+    <canvas id="board" class="board"></canvas>
+</body>
+<!-- 页面JS -->
+<script src="/static/js/socket.js"></script>
+<script src="/static/js/renderCanvas.js"></script>
+<script src="/static/js/index.js"></script>
+</html>
